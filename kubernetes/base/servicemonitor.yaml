@@ -1,0 +1,18 @@
+# ServiceMonitor for Prometheus Operator — enable if using kube-prometheus-stack.
+# If using raw Prometheus with pod annotations, this is not needed (the
+# deployment's prometheus.io/* annotations handle scraping).
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: deployment-demo
+  namespace: deployment-demo
+  labels:
+    app.kubernetes.io/name: deployment-demo
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: deployment-demo
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

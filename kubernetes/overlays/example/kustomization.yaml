@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+
+# Override the image tag to deploy a specific version.
+# Change this to roll between versions:
+#   1.0.0 — green, healthy (baseline)
+#   1.0.2 — blue, healthy (demonstrates update)
+#   1.0.3 — red, BROKEN (demonstrates rollback)
+#   1.0.4 — green, healthy (demonstrates fix)
+images:
+  - name: ghcr.io/nikogura/deployment-demo
+    newTag: "1.0.0"
+
+# Add Tempo URL if tracing is available:
+patches:
+  - target:
+      kind: Deployment
+      name: deployment-demo
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: DEMO_TEMPO_URL
+          value: "tempo.monitoring.svc.cluster.local:4317"

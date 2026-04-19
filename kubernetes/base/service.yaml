@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: deployment-demo
+  namespace: deployment-demo
+  labels:
+    app.kubernetes.io/name: deployment-demo
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: deployment-demo
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
