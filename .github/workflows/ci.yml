@@ -121,3 +121,73 @@ jobs:
           ${{ env.IMAGE }}:${{ matrix.version }}
         cache-from: type=gha,scope=${{ matrix.version }}
         cache-to: type=gha,scope=${{ matrix.version }},mode=max
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: publish
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Tag repo
+      uses: mathieudutour/github-tag-action@v6.2
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        custom_tag: "1.0.0"
+        tag_prefix: "v"
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v1.0.0
+        name: deployment-demo v1.0.0
+        draft: false
+        prerelease: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+        body: |
+          ## Deployment Demo — Observability + Lifecycle Demonstration
+
+          Four container images published to `ghcr.io/nikogura/deployment-demo`:
+
+          | Tag | Theme | Health | Purpose |
+          |-----|-------|--------|---------|
+          | `1.0.0` | Green | Healthy | Baseline deployment |
+          | `1.0.2` | Blue | Healthy | Demonstrates version update |
+          | `1.0.3` | Red | **Broken** (503 /healthz) | Demonstrates rollback |
+          | `1.0.4` | Green | Healthy | Demonstrates fix after rollback |
+
+          ### Quick Start
+
+          ```bash
+          # Pull any version
+          docker pull ghcr.io/nikogura/deployment-demo:1.0.0
+
+          # Run locally
+          docker run -p 8080:8080 ghcr.io/nikogura/deployment-demo:1.0.0
+
+          # Open http://localhost:8080
+          ```
+
+          ### Kubernetes
+
+          ```bash
+          kubectl apply -k kubernetes/base
+
+          # To change versions, update the image tag in your overlay:
+          # images:
+          #   - name: ghcr.io/nikogura/deployment-demo
+          #     newTag: "1.0.2"
+          ```
+
+          ### What each version shows
+
+          - **1.0.0 → 1.0.2**: Version badge changes (green → blue), theme shifts. Metrics show the cutover.
+          - **1.0.2 → 1.0.3**: Red theme, "BROKEN" banner, `/healthz` returns 503. K8s probes fail, pods crashloop. Reconciliation engine rolls back.
+          - **1.0.3 → 1.0.4**: Green restored, healthy. Demonstrates the fix.
+
+          All versions emit Prometheus RED metrics (`/metrics`), structured JSON logs to stdout, and OpenTelemetry traces to Tempo (when `DEMO_TEMPO_URL` is set).
