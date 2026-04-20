@@ -7,7 +7,7 @@ COPY pkg/ui/ .
 RUN npm run build
 
 # ---------- Stage 2: Build the Go binary ----------
-FROM golang:1.25-alpine AS go-builder
+FROM golang:1.26-alpine AS go-builder
 
 ARG VERSION=dev
 ARG THEME=green
